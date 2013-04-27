@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FREXInput", "FREXInput.vcxproj", "{F8122873-33C7-4C83-9672-810AD07760C6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FREXInputTest", "..\FREXInputTest\FREXInputTest.vcxproj", "{02901CA1-E8D6-43BF-A80C-4E07011B72C4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F8122873-33C7-4C83-9672-810AD07760C6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F8122873-33C7-4C83-9672-810AD07760C6}.Debug|Win32.Build.0 = Debug|Win32
+		{F8122873-33C7-4C83-9672-810AD07760C6}.Release|Win32.ActiveCfg = Release|Win32
+		{F8122873-33C7-4C83-9672-810AD07760C6}.Release|Win32.Build.0 = Release|Win32
+		{02901CA1-E8D6-43BF-A80C-4E07011B72C4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{02901CA1-E8D6-43BF-A80C-4E07011B72C4}.Debug|Win32.Build.0 = Debug|Win32
+		{02901CA1-E8D6-43BF-A80C-4E07011B72C4}.Release|Win32.ActiveCfg = Release|Win32
+		{02901CA1-E8D6-43BF-A80C-4E07011B72C4}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

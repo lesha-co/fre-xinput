@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
+                       xmlns:s="library://ns.adobe.com/flex/spark"
+                       xmlns:mx="library://ns.adobe.com/flex/mx"
+                       addedToStage="windowedapplication1_addedToStageHandler(event)"
+                       close="windowedapplication1_closeHandler(event)">
+    
+    <fx:Script>
+        <![CDATA[
+            
+            
+            import com.amdevcorp.FREXInput.FREXInputLib;
+            import com.amdevcorp.FREXInput.XINPUT_GAMEPAD;
+            private var _xinput:FREXInputLib;
+            private var gp:XINPUT_GAMEPAD;
+            private var t:Timer;
+            protected function button1_clickHandler(event:MouseEvent):void
+            {
+                t.start();
+                
+            }
+            
+            protected function windowedapplication1_addedToStageHandler(event:Event):void
+            {
+                t = new Timer(500)
+                t.addEventListener(TimerEvent.TIMER,onTimer);   
+                _xinput = new FREXInputLib();
+                _xinput.activate()
+            }
+            protected function onTimer (e:Event = null):void{
+                try{
+                    gp = _xinput.XInputGetState(0);
+                    trace(gp.A_PRESSED);                    
+                } catch (err:Error) {
+                    trace("LE BIG FAIL "+ err.errorID );
+                }
+
+            }
+            protected function windowedapplication1_closeHandler(event:Event):void
+            {
+                // TODO Auto-generated method stub
+                _xinput.dispose();
+                
+            }
+            
+        ]]>
+    </fx:Script>
+    
+    <fx:Declarations>
+        <!-- Place non-visual elements (e.g., services, value objects) here -->
+    </fx:Declarations>
+    <s:Button id="btn" x="10" y="10" width="543" label="Start" click="button1_clickHandler(event)"/>
+</s:WindowedApplication>

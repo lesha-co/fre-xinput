@@ -1,0 +1,1 @@
+adt -package -target ane %_ane% %descriptor% -swc %_swc% -platform Windows-x86 library.swf %_dll%

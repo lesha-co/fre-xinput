@@ -1,0 +1,13 @@
+<extension xmlns="http://ns.adobe.com/air/extension/3.1"> 
+    <id>com.amdevcorp.ane.FREXInput</id> 
+    <versionNumber>1</versionNumber> 
+    <platforms> 
+        <platform name="Windows-x86"> 
+            <applicationDeployment> 
+                <nativeLibrary>FREXInput.dll</nativeLibrary>
+                <initializer>FREXInputInitializer</initializer>
+			<finalizer>FREXInputFinalizer</finalizer>
+            </applicationDeployment>
+        </platform> 
+    </platforms> 
+</extension>

@@ -1,4 +1,4 @@
-// FREXInputTest.cpp : Defines the entry point for the console application.
+﻿// FREXInputTest.cpp : Defines the entry point for the console application.
 //
 
 #include "stdafx.h"

@@ -33,7 +33,7 @@
             protected function onTimer (e:Event = null):void{
                 try{
                     gp = _xinput.XInputGetState(0);
-                    trace(gp.A_PRESSED);                    
+                    trace(gp.GUIDE_BTN_PRESSED);                    
                 } catch (err:Error) {
                     trace("LE BIG FAIL "+ err.errorID );
                 }

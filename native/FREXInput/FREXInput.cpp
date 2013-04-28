@@ -1,37 +1,39 @@
+﻿/* notation
+ * FRE***  - functions : bridge to AIR — must be filed in context initializer with name "***"
+ * DLL_*** - functions : alias for corresponring *** functions in XInput1_3.dll
+ * PL_***  - functions : «payload» functions. They do all dirty work with corresponding DLL_*** functions and used by corresponding FRE*** functions
+ *
+ * THE MAP:
+ * XInput1_3.dll <-> DLL_*** <-> PL_*** <-> FRE*** <-> AIR runtime
+ *                                ^
+ *                                `-> FREXInputTest project 
+ *
+ */
+
 #include "FREXinput.h"
 #include <windows.h>
 #include <XInput.h>
-#include <string>       // std::string
-#include <iostream>     // std::cout
-#include <sstream>      // std::stringstream
+#include <string>       
+#include <iostream>     
+#include <sstream>
 
+//library 
+HMODULE hinstLib; 
 
-
-
-// notation
-// FRE***  - functions : bridge to AIR � must be filed in context initializer with name "***"
-// DLL_*** - functions : alias for *** functions in XInput1_3.dll
-// PL_***  - functions : payload
-
-//struct ControllerStruct
-//	{
-//		unsigned long eventCount; //event counter, increases with every controller event,
-//					  //but for some reason not by one.
-//		__int16 btns; // button state bitfield
-//		unsigned char lTrigger;  //Left Trigger
-//		unsigned char rTrigger;  //Right Trigger
-//		short lJoyY;  //Left Joystick Y
-//		short lJoyX;  //Left Joystick X
-//		short rJoyY;  //Right Joystick Y 
-//		short rJoyX;  //Right Joystick X
-//	};
-
+// Let me explain some things. XInputGetState function provides all information except «guide» button status 
+// Function I will call additionally provides all information about gamepad, except mysterious dwPacketNumber.
+// Even if I really don't know its usecase, I want to provide ALL info, dwPacketNumber included. Therefore, I
+// need both functions
 
 typedef void (WINAPI *XInputGetState_t)(uint32_t,XINPUT_STATE*); 
+typedef int(__stdcall * XInputGetState2_t)(int, XINPUT_STATE &); // <<<
 typedef DWORD (WINAPI *XInputSetState_t)(uint32_t,XINPUT_VIBRATION*); 
-HMODULE  hinstLib; 
-XInputGetState_t DLL_XInputGetState;
+
 XInputSetState_t DLL_XInputSetState;
+XInputGetState_t DLL_XInputGetState;    // standard XInputGetState
+XInputGetState2_t DLL_XInputGetState2;  // kind of private function, i'm not reaaly good in terms
+
+// linkage status
 BOOL fRunTimeLinkSuccess = FALSE; 
 
 void XINPUT_STATE_to_JSON(XINPUT_STATE state, uint8_t** response){
@@ -39,9 +41,6 @@ void XINPUT_STATE_to_JSON(XINPUT_STATE state, uint8_t** response){
 	jsonState << "{\"packetNumber\": "<< (uint32_t)state.dwPacketNumber << ",\"gamepad\":{\"sticks\":[{\"x\":\"" << state.Gamepad.sThumbLX << "\",\"y\":\"" << state.Gamepad.sThumbLY <<
 		    "\"},{\"x\":\"" << state.Gamepad.sThumbRX << "\",\"y\":\"" << state.Gamepad.sThumbRY <<"\"}],\"buttons\":\"" <<
 			state.Gamepad.wButtons << "\",\"triggers\":[\"" << (int)state.Gamepad.bLeftTrigger << "\",\"" << (int)state.Gamepad.bRightTrigger << "\"]}}";
-	//jsonState << "{\"packetNumber\": "<< (uint32_t)state.eventCount << ",\"gamepad\":{\"sticks\":[{\"x\":\"" << state.lJoyX << "\",\"y\":\"" << state.lJoyY <<
-	//			"\"},{\"x\":\"" << state.rJoyX << "\",\"y\":\"" << state.rJoyY<<"\"}],\"buttons\":\"" <<
-	//		state.btns << "\",\"triggers\":[\"" << (int)state.lTrigger << "\",\"" << (int)state.rTrigger << "\"]}}";
 	std::string s = jsonState.str();
 	*response = (uint8_t*)strcpy((char*)malloc(s.length() + 1), s.c_str());
 	return;
@@ -52,8 +51,12 @@ void XINPUT_STATE_to_JSON(XINPUT_STATE state, uint8_t** response){
 /////////////////////////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   /// 
 
 void PL_XInputGetState(DWORD dwUserIndex, XINPUT_STATE* state){
+
 	//ControllerStruct state;
-	DLL_XInputGetState (dwUserIndex,state);
+
+	//DLL_XInputGetState (dwUserIndex,state);
+	DLL_XInputGetState2 ((int)dwUserIndex,*state);
+	int i = rand();
 	return;
 	
 }
@@ -73,12 +76,16 @@ BOOL PL_activate (){
 		hinstLib = LoadLibrary(TEXT("XInput1_3.dll")); 
 		if (hinstLib != NULL) 
 		{ 
+			//GetStateAdress = GetProcAddress(hinstLib, (LPCSTR)100); // !!! COOL HACKS !!1
+			//DLL_XInputGetState2 = XInputGetState2_t(GetStateAdress);
+			DLL_XInputGetState2 = (XInputGetState2_t) GetProcAddress(hinstLib, (LPCSTR)100);
 			DLL_XInputGetState = (XInputGetState_t) GetProcAddress(hinstLib, "XInputGetState"); 
 			DLL_XInputSetState = (XInputSetState_t) GetProcAddress(hinstLib, "XInputSetState"); 
 		    // If the function address is valid, call the function.
 			// List of functions we need to use
 		    if (NULL != DLL_XInputGetState &&
-				NULL != DLL_XInputSetState ) 
+				NULL != DLL_XInputSetState &&
+				NULL != DLL_XInputGetState2) 
 		    {
 		        fRunTimeLinkSuccess = TRUE; 
 		    }
@@ -103,7 +110,6 @@ FREObject FRE_XInputGetState(FREContext ctx, void* funcData, uint32_t argc, FREO
 	XINPUT_STATE_to_JSON(state,&json);
 
 	FREObject result;
-	//FRENewObjectFromUint32(state,&result);
 	FRENewObjectFromUTF8(strlen((const char*)json),(const uint8_t*)json,&result);
 	return result;
 }
@@ -122,8 +128,6 @@ FREObject FRE_XInputSetState(FREContext ctx, void* funcData, uint32_t argc, FREO
 	FRENewObjectFromUint32(errorCode, &result);
 	return result;
 }
-
-
 
 FREObject FRE_activate(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
 {

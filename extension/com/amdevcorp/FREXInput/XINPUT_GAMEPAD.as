@@ -22,8 +22,8 @@ package com.amdevcorp.FREXInput
 		public function get RSTICK_PRESSED		 ():Boolean{return (Buttons & 0x0080)!=0 };
 		public function get LB_PRESSED			 ():Boolean{return (Buttons & 0x0100)!=0 };
 		public function get RB_PRESSED			 ():Boolean{return (Buttons & 0x0200)!=0 };
-		// ???  probably «home» button                                        0x4000
-		// ???  MYSTERY                                                       0x8000
+        public function get GUIDE_BTN_PRESSED    ():Boolean{return (Buttons & 0x0400)!=0 };
+		// ???              UNALLOCATED                                       0x0800
 		public function get A_PRESSED			 ():Boolean{return (Buttons & 0x1000)!=0 };
 		public function get B_PRESSED			 ():Boolean{return (Buttons & 0x2000)!=0 };
 		public function get X_PRESSED			 ():Boolean{return (Buttons & 0x4000)!=0 };

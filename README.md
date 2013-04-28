@@ -5,11 +5,9 @@ This extension provides basic API for interacting with XBox360 gamepads
 ### Features:  
 
 implemented:  
-+ getting information about gamepad state (buttons, sticks, triggers);
++ getting information about gamepad state (buttons, sticks, triggers, even guide buutton);
 + setting vibration state;  
-
 soon:   
-+ maybe «home» button  
 + other cool things from XInput library [\[msdn\]](http://msdn.microsoft.com/en-us/library/windows/desktop/ee417007\(v=vs.85\).aspx)  
 
 ### You will need:

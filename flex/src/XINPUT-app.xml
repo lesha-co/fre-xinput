@@ -230,12 +230,6 @@
 	<!-- End of the schema for adding the android specific tags in AndroidManifest.xml file -->
 
 <extensions>
-        <extensionID>in.malyavk.fre-xinput</extensionID>
-    <extensionID>com.amdevcorp.frexinput</extensionID>
-    
-    
-    <extensionID>com.amdevcorp.ane.FREXInput</extensionID>
-    
-    
+    <extensionID>com.amdevcorp.ane.FREXInput</extensionID>    
     </extensions>
 </application>

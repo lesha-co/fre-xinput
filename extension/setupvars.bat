@@ -1,7 +1,7 @@
 for /F "tokens=*" %%i in ('cd') do set CURRENTDIR=%%i
 
 Set _swc=FREXInput.swc
-Set dllLocation=..\native\FREXInput\Release\
+Set dllLocation=native\FREXInput\Release\
 Set _dll=FREXInput.dll
 Set _ane=xinput.ane
 ::Set swcsource=FREXInput.as

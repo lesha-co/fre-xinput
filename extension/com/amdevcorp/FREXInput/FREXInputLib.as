@@ -22,6 +22,11 @@ package com.amdevcorp.FREXInput
         };
         
         
+        public function XInputSetState(userIndex:uint, lRumble:uint, rRumble:uint):uint
+        {
+            return _ctx.call("XInputSetState",userIndex,lRumble,rRumble) as uint;
+        }
+        
         public function XInputGetState(userIndex:uint):XINPUT_GAMEPAD
         {
             var state:String = _ctx.call("XInputGetState",userIndex) as String

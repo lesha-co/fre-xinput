@@ -1,4 +1,4 @@
-@echo off
+
 call setupvars.bat
 if exist %_swc% del %_swc% 
 if exist %_dll% del %_dll% 

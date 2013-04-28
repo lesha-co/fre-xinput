@@ -28,18 +28,13 @@
 
 
 typedef void (WINAPI *XInputGetState_t)(uint32_t,XINPUT_STATE*); 
-//typedef void (WINAPI *XInputGetState_t)(uint32_t,ControllerStruct*); 
-
-
-
+typedef DWORD (WINAPI *XInputSetState_t)(uint32_t,XINPUT_VIBRATION*); 
 HMODULE  hinstLib; 
-XInputGetState_t DLL_XInputGetState; 
+XInputGetState_t DLL_XInputGetState;
+XInputSetState_t DLL_XInputSetState;
 BOOL fRunTimeLinkSuccess = FALSE; 
 
-void PL_XInputGetState(DWORD dwUserIndex, uint8_t** response){
-	XINPUT_STATE state;
-	//ControllerStruct state;
-	(DLL_XInputGetState) (dwUserIndex,&state);
+void XINPUT_STATE_to_JSON(XINPUT_STATE state, uint8_t** response){
 	std::stringstream jsonState;
 	jsonState << "{\"packetNumber\": "<< (uint32_t)state.dwPacketNumber << ",\"gamepad\":{\"sticks\":[{\"x\":\"" << state.Gamepad.sThumbLX << "\",\"y\":\"" << state.Gamepad.sThumbLY <<
 		    "\"},{\"x\":\"" << state.Gamepad.sThumbRX << "\",\"y\":\"" << state.Gamepad.sThumbRY <<"\"}],\"buttons\":\"" <<
@@ -52,6 +47,25 @@ void PL_XInputGetState(DWORD dwUserIndex, uint8_t** response){
 	return;
 }
 
+///////////////////////////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///
+/// FUNCTIONS WE EXPORT IN DLL FOR TESTING ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///
+/////////////////////////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   /// 
+
+void PL_XInputGetState(DWORD dwUserIndex, XINPUT_STATE* state){
+	//ControllerStruct state;
+	DLL_XInputGetState (dwUserIndex,state);
+	return;
+	
+}
+DWORD PL_XInputSetState(DWORD dwUserIndex, WORD left, WORD right){
+	XINPUT_VIBRATION rumble;
+	rumble.wLeftMotorSpeed = left;
+	rumble.wRightMotorSpeed = right;
+	return (DWORD) DLL_XInputSetState (dwUserIndex,&rumble);
+
+}
+
+
 BOOL PL_activate (){
 
 	if (!fRunTimeLinkSuccess)
@@ -60,8 +74,11 @@ BOOL PL_activate (){
 		if (hinstLib != NULL) 
 		{ 
 			DLL_XInputGetState = (XInputGetState_t) GetProcAddress(hinstLib, "XInputGetState"); 
+			DLL_XInputSetState = (XInputSetState_t) GetProcAddress(hinstLib, "XInputSetState"); 
 		    // If the function address is valid, call the function.
-		    if (NULL != DLL_XInputGetState) 
+			// List of functions we need to use
+		    if (NULL != DLL_XInputGetState &&
+				NULL != DLL_XInputSetState ) 
 		    {
 		        fRunTimeLinkSuccess = TRUE; 
 		    }
@@ -71,26 +88,42 @@ BOOL PL_activate (){
 
 }
 
+/////////////////////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///
+/// FUNCTIONS WE EXPORT IN EXTENSION ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   /// 
+///////////////////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///  
+
 FREObject FRE_XInputGetState(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
 {
 	uint32_t dwUserIndex = 0;
 	FREGetObjectAsUint32(argv[0], &dwUserIndex);
-	uint8_t* state= NULL;
+	uint8_t* json= NULL;
 	
-	
-		
+	XINPUT_STATE state;
 	PL_XInputGetState((DWORD) dwUserIndex,&state);
-	
+	XINPUT_STATE_to_JSON(state,&json);
+
 	FREObject result;
 	//FRENewObjectFromUint32(state,&result);
-	FRENewObjectFromUTF8(strlen((const char*)state),(const uint8_t*)state,&result);
+	FRENewObjectFromUTF8(strlen((const char*)json),(const uint8_t*)json,&result);
+	return result;
+}
+
+FREObject FRE_XInputSetState(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+{
+	uint32_t dwUserIndex = 0;
+	uint32_t lRumble = 0;
+	uint32_t rRumble = 0;
+	uint32_t errorCode = 0;
+	FREGetObjectAsUint32(argv[0],&dwUserIndex);
+	FREGetObjectAsUint32(argv[1],&lRumble);
+	FREGetObjectAsUint32(argv[2],&rRumble);
+	errorCode = (uint32_t) PL_XInputSetState(dwUserIndex,(WORD)lRumble,(WORD)rRumble);
+	FREObject result;
+	FRENewObjectFromUint32(errorCode, &result);
 	return result;
 }
 
 
-////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   //
-/// RESTRICTED AREA ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///
-//////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   /// 
 
 FREObject FRE_activate(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
 {
@@ -107,9 +140,13 @@ FREObject FRE_isSupported(FREContext ctx, void* funcData, uint32_t argc, FREObje
 	return result;
 }
 
+////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   //
+/// RESTRICTED AREA ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///
+//////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   /// 
+
 void contextInitializer(void* extData, const uint8_t* ctxType, FREContext ctx, uint32_t* numFunctions, const FRENamedFunction** functions)
 {
-	*numFunctions = 3;
+	*numFunctions = 4;
 
 	FRENamedFunction* func = (FRENamedFunction*) malloc(sizeof(FRENamedFunction) * (*numFunctions));
 
@@ -125,6 +162,9 @@ void contextInitializer(void* extData, const uint8_t* ctxType, FREContext ctx, u
 	func[2].functionData = NULL;
 	func[2].function = &FRE_XInputGetState;
 
+	func[3].name = (const uint8_t*) "XInputSetState";
+	func[3].functionData = NULL;
+	func[3].function = &FRE_XInputSetState;
 
 	*functions = func;
 }

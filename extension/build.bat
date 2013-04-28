@@ -1,11 +1,11 @@
-@echo off
+
 call setupvars.bat
 
 ::clearing build
 call clean.bat
 
 ::copying last dll 
-copy "%CURRENTDIR%\%dllLocation%%_dll%" . /Y
+copy "..\%dllLocation%%_dll%" . /Y
 
 ::creating an SWC
 call swc.bat

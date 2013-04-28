@@ -2,6 +2,7 @@
 <s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
                        xmlns:s="library://ns.adobe.com/flex/spark"
                        xmlns:mx="library://ns.adobe.com/flex/mx"
+                       width="67" height="180"
                        addedToStage="windowedapplication1_addedToStageHandler(event)"
                        close="windowedapplication1_closeHandler(event)">
     
@@ -26,6 +27,8 @@
                 t.addEventListener(TimerEvent.TIMER,onTimer);   
                 _xinput = new FREXInputLib();
                 _xinput.activate()
+                
+                t.start();
             }
             protected function onTimer (e:Event = null):void{
                 try{
@@ -43,11 +46,22 @@
                 
             }
             
+            protected function setBtn_clickHandler(event:MouseEvent):void
+            {
+                
+                var lVibration:uint = lRumble.value 
+                var rVibration:uint = rRumble.value
+                
+                _xinput.XInputSetState(0,lVibration,rVibration);    
+            }
+            
         ]]>
     </fx:Script>
     
     <fx:Declarations>
         <!-- Place non-visual elements (e.g., services, value objects) here -->
     </fx:Declarations>
-    <s:Button id="btn" x="10" y="10" width="543" label="Start" click="button1_clickHandler(event)"/>
+    <s:VSlider id="lRumble" x="10" y="10" width="20" maximum="65535" minimum="0"/>
+    <s:VSlider id="rRumble" x="38" y="10" width="20" maximum="65535" minimum="0"/>
+    <s:Button id="setBtn" x="10" y="118" width="49" label="Set" click="setBtn_clickHandler(event)"/>
 </s:WindowedApplication>

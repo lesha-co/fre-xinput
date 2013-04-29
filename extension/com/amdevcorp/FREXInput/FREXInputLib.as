@@ -18,7 +18,9 @@ package com.amdevcorp.FREXInput
         };
         public function activate():Boolean
         {
-            return (_ctx.call("activate") as Boolean)
+            var success:Boolean = _ctx.call("activate") as Boolean;
+            if(!success) trace("Attention, extension failed to start normally");
+            return (success)
         };
         
         
@@ -34,6 +36,12 @@ package com.amdevcorp.FREXInput
             gp.initWithJSON(state)
             return gp;
         };
+        
+        public function XInputEnable(enable:Boolean):void
+        {
+            trace( _ctx.call("XInputEnable",enable) as Boolean);
+            return;
+        }
         
         
         public function dispose():void

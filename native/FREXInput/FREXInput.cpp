@@ -4,9 +4,9 @@
  * PL_***  - functions : «payload» functions. They do all dirty work with corresponding DLL_*** functions and used by corresponding FRE*** functions
  *
  * THE MAP:
- * XInput1_3.dll <-> DLL_*** <-> PL_*** <-> FRE*** <-> AIR runtime
- *                                ^
- *                                `-> FREXInputTest project 
+ * XInput1_3.dll <-> DLL_*** <-> PL_*** <--> FRE*** <-> AIR runtime
+ *                                        `-> FREXInputTest project 
+ *                                
  *
  */
 
@@ -25,10 +25,12 @@ HMODULE hinstLib;
 // Even if I really don't know its usecase, I want to provide ALL info, dwPacketNumber included. Therefore, I
 // need both functions
 
-typedef void (WINAPI *XInputGetState_t)(uint32_t,XINPUT_STATE*); 
-typedef int(__stdcall * XInputGetState2_t)(int, XINPUT_STATE &); // <<<
+typedef void (WINAPI *XInputEnable_t)(BOOL); 
+typedef void (WINAPI *XInputGetState_t)(DWORD,XINPUT_STATE*); 
+typedef int(__stdcall * XInputGetState2_t)(DWORD, XINPUT_STATE &); // <<<
 typedef DWORD (WINAPI *XInputSetState_t)(uint32_t,XINPUT_VIBRATION*); 
 
+XInputEnable_t DLL_XInputEnable;
 XInputSetState_t DLL_XInputSetState;
 XInputGetState_t DLL_XInputGetState;    // standard XInputGetState
 XInputGetState2_t DLL_XInputGetState2;  // kind of private function, i'm not reaaly good in terms
@@ -50,16 +52,14 @@ void XINPUT_STATE_to_JSON(XINPUT_STATE state, uint8_t** response){
 /// FUNCTIONS WE EXPORT IN DLL FOR TESTING ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///
 /////////////////////////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   /// 
 
-void PL_XInputGetState(DWORD dwUserIndex, XINPUT_STATE* state){
-
-	//ControllerStruct state;
-
-	//DLL_XInputGetState (dwUserIndex,state);
-	DLL_XInputGetState2 ((int)dwUserIndex,*state);
-	int i = rand();
-	return;
-	
+// (MSDN) Sets the reporting state of XInput.
+// This affects all gamepads connected.
+void PL_XInputEnable(BOOL enable){
+	DLL_XInputEnable(enable);
 }
+
+// (MSDN) Sends data to a connected controller. 
+// (MSDN) This function is used to activate the vibration function of a controller.
 DWORD PL_XInputSetState(DWORD dwUserIndex, WORD left, WORD right){
 	XINPUT_VIBRATION rumble;
 	rumble.wLeftMotorSpeed = left;
@@ -68,7 +68,20 @@ DWORD PL_XInputSetState(DWORD dwUserIndex, WORD left, WORD right){
 
 }
 
+// (MSDN) Retrieves the current state of the specified controller.
+void PL_XInputGetState(DWORD dwUserIndex, XINPUT_STATE* state){
 
+	XINPUT_STATE add_state;
+	DLL_XInputGetState (dwUserIndex,&add_state);
+	DLL_XInputGetState2 (dwUserIndex,*state);
+	state->dwPacketNumber = add_state.dwPacketNumber;
+	int i = rand();
+	return;
+	
+}
+
+// Loads XInput1_3.dll and gets function addresses.
+// If succeeded, returns true, false otherwise.
 BOOL PL_activate (){
 
 	if (!fRunTimeLinkSuccess)
@@ -76,28 +89,38 @@ BOOL PL_activate (){
 		hinstLib = LoadLibrary(TEXT("XInput1_3.dll")); 
 		if (hinstLib != NULL) 
 		{ 
-			//GetStateAdress = GetProcAddress(hinstLib, (LPCSTR)100); // !!! COOL HACKS !!1
-			//DLL_XInputGetState2 = XInputGetState2_t(GetStateAdress);
-			DLL_XInputGetState2 = (XInputGetState2_t) GetProcAddress(hinstLib, (LPCSTR)100);
+			DLL_XInputEnable = (XInputEnable_t) GetProcAddress(hinstLib, "XInputEnable");
+			DLL_XInputGetState2 = (XInputGetState2_t) GetProcAddress(hinstLib, (LPCSTR)100);// !!! COOL HACKS !!1
 			DLL_XInputGetState = (XInputGetState_t) GetProcAddress(hinstLib, "XInputGetState"); 
 			DLL_XInputSetState = (XInputSetState_t) GetProcAddress(hinstLib, "XInputSetState"); 
-		    // If the function address is valid, call the function.
 			// List of functions we need to use
 		    if (NULL != DLL_XInputGetState &&
 				NULL != DLL_XInputSetState &&
-				NULL != DLL_XInputGetState2) 
+				NULL != DLL_XInputGetState2 &&
+				NULL != DLL_XInputEnable) 
 		    {
 		        fRunTimeLinkSuccess = TRUE; 
 		    }
 		}
 	}
 	return fRunTimeLinkSuccess;
-
 }
 
 /////////////////////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///
 /// FUNCTIONS WE EXPORT IN EXTENSION ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   /// 
 ///////////////////////////////////////   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///   ///  
+
+
+FREObject FRE_XInputEnable(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+{
+	uint32_t enable;
+	FREGetObjectAsBool(argv[0],&enable);
+	PL_XInputEnable((BOOL)enable);
+	FREObject result;
+	FRENewObjectFromBool(enable,&result);
+	return result;
+}
+
 
 FREObject FRE_XInputGetState(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
 {
@@ -150,7 +173,7 @@ FREObject FRE_isSupported(FREContext ctx, void* funcData, uint32_t argc, FREObje
 
 void contextInitializer(void* extData, const uint8_t* ctxType, FREContext ctx, uint32_t* numFunctions, const FRENamedFunction** functions)
 {
-	*numFunctions = 4;
+	*numFunctions = 5;
 
 	FRENamedFunction* func = (FRENamedFunction*) malloc(sizeof(FRENamedFunction) * (*numFunctions));
 
@@ -169,6 +192,10 @@ void contextInitializer(void* extData, const uint8_t* ctxType, FREContext ctx, u
 	func[3].name = (const uint8_t*) "XInputSetState";
 	func[3].functionData = NULL;
 	func[3].function = &FRE_XInputSetState;
+
+	func[4].name = (const uint8_t*) "XInputEnable";
+	func[4].functionData = NULL;
+	func[4].function = &FRE_XInputEnable;
 
 	*functions = func;
 }

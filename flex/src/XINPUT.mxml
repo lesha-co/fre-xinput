@@ -15,25 +15,32 @@
             private var _xinput:FREXInputLib;
             private var gp:XINPUT_GAMEPAD;
             private var t:Timer;
+            private var flag:Boolean;
             protected function button1_clickHandler(event:MouseEvent):void
             {
-                t.start();
-                
+  
             }
             
             protected function windowedapplication1_addedToStageHandler(event:Event):void
             {
-                t = new Timer(500)
+                t = new Timer(2000)
                 t.addEventListener(TimerEvent.TIMER,onTimer);   
                 _xinput = new FREXInputLib();
                 _xinput.activate()
-                
+                _xinput.XInputSetState(0,65535,65535);
+
                 t.start();
+                flag=true;
+                
+                
+                
             }
             protected function onTimer (e:Event = null):void{
                 try{
-                    gp = _xinput.XInputGetState(0);
-                    trace(gp.GUIDE_BTN_PRESSED);                    
+                    flag=!flag;
+                    if(flag) trace("enabling...") else trace("disabling");
+                    _xinput.XInputEnable(flag);
+                    
                 } catch (err:Error) {
                     trace("LE BIG FAIL "+ err.errorID );
                 }
@@ -52,7 +59,7 @@
                 var lVibration:uint = lRumble.value 
                 var rVibration:uint = rRumble.value
                 
-                _xinput.XInputSetState(0,lVibration,rVibration);    
+                //_xinput.XInputSetState(0,lVibration,rVibration);    
             }
             
         ]]>

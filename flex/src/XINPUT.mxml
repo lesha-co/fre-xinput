@@ -10,10 +10,9 @@
         <![CDATA[
             
             
-            import com.amdevcorp.FREXInput.FREXInputLib;
+            import com.amdevcorp.FREXInput.Gamepad;
             import com.amdevcorp.FREXInput.XINPUT_GAMEPAD;
-            private var _xinput:FREXInputLib;
-            private var gp:XINPUT_GAMEPAD;
+            private var gp:Gamepad;
             private var t:Timer;
             private var flag:Boolean;
             protected function button1_clickHandler(event:MouseEvent):void
@@ -25,12 +24,13 @@
             {
                 t = new Timer(2000)
                 t.addEventListener(TimerEvent.TIMER,onTimer);   
-                _xinput = new FREXInputLib();
-                _xinput.activate()
-                _xinput.XInputSetState(0,65535,65535);
+                gp = new Gamepad(0);
+                gp.rumble = [65535,65535];
+                trace(gp.isPressed(Gamepad.GUIDE));
+                //_xinput.XInputSetState(0,65535,65535);
 
-                t.start();
-                flag=true;
+                //t.start();
+                //flag=true;
                 
                 
                 
@@ -39,7 +39,7 @@
                 try{
                     flag=!flag;
                     if(flag) trace("enabling...") else trace("disabling");
-                    _xinput.XInputEnable(flag);
+                    gp.rumble = [uint(flag)*Gamepad.RUMBLE_MAX_VALUE,0]
                     
                 } catch (err:Error) {
                     trace("LE BIG FAIL "+ err.errorID );
@@ -49,7 +49,7 @@
             protected function windowedapplication1_closeHandler(event:Event):void
             {
                 // TODO Auto-generated method stub
-                _xinput.dispose();
+                gp._Gamepad();
                 
             }
             

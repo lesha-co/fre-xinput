@@ -13,17 +13,18 @@ int _tmain(int argc, _TCHAR* argv[])
 	BOOL flag = false;
 	if (PL_activate())
 	{
-
+		
 		cout << "  Packet  btns     LX     LY     RX     RY" << endl;
 		while(1){
 			XINPUT_STATE state;
 			ZeroMemory(&state,sizeof(state));
 			PL_XInputGetState(index,&state);
-			PL_XInputSetState(index,
-							  (WORD)(Multiplier*state.Gamepad.bLeftTrigger),
-							  (WORD)(Multiplier*state.Gamepad.bRightTrigger));
 			
-			printf("%*d\: %*x %*d %*d %*d %*d \r",8,state.dwPacketNumber,
+			PL_XInputSetState(index,
+							 (WORD)(Multiplier*state.Gamepad.bRightTrigger),
+							 (WORD)(Multiplier*state.Gamepad.bLeftTrigger));
+			
+			printf("%*d: %*x %*d %*d %*d %*d \r",8,state.dwPacketNumber,
 											4,state.Gamepad.wButtons,
 											6,state.Gamepad.sThumbLX,
 											6,state.Gamepad.sThumbLY,

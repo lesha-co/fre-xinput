@@ -7,10 +7,10 @@ package com.amdevcorp.FREXInput
         public var Buttons  : uint;
 		public var LTrigger : uint;
 		public var RTrigger : uint;
-		public var ThumbLX  : uint;
-		public var ThumbLY  : uint;
-		public var ThumbRX  : uint;
-		public var ThumbRY  : uint;
+		public var ThumbLX  : int;
+		public var ThumbLY  : int;
+		public var ThumbRX  : int;
+		public var ThumbRY  : int;
 		
 		
 		public function get LStick():Point {

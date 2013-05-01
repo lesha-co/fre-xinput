@@ -2,50 +2,38 @@
 <s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
                        xmlns:s="library://ns.adobe.com/flex/spark"
                        xmlns:mx="library://ns.adobe.com/flex/mx"
-                       width="67" height="180"
+                       width="209" height="114"
                        addedToStage="windowedapplication1_addedToStageHandler(event)"
                        close="windowedapplication1_closeHandler(event)">
     
     <fx:Script>
         <![CDATA[
-            
-            
             import com.amdevcorp.FREXInput.Gamepad;
+            import com.amdevcorp.FREXInput.GamepadEvent;
             import com.amdevcorp.FREXInput.XINPUT_GAMEPAD;
             private var gp:Gamepad;
             private var t:Timer;
             private var flag:Boolean;
             protected function button1_clickHandler(event:MouseEvent):void
             {
-  
+                
             }
             
             protected function windowedapplication1_addedToStageHandler(event:Event):void
             {
-                t = new Timer(2000)
-                t.addEventListener(TimerEvent.TIMER,onTimer);   
+   
                 gp = new Gamepad(0);
-                gp.rumble = [65535,65535];
-                trace(gp.isPressed(Gamepad.GUIDE));
-                //_xinput.XInputSetState(0,65535,65535);
-
-                //t.start();
-                //flag=true;
-                
-                
-                
-            }
-            protected function onTimer (e:Event = null):void{
-                try{
-                    flag=!flag;
-                    if(flag) trace("enabling...") else trace("disabling");
-                    gp.rumble = [uint(flag)*Gamepad.RUMBLE_MAX_VALUE,0]
-                    
-                } catch (err:Error) {
-                    trace("LE BIG FAIL "+ err.errorID );
-                }
+                gp.addEventListener(GamepadEvent.PRESS,onGP);
+                gp.addEventListener(GamepadEvent.STICK_MOVED,onStick);
 
             }
+            private function onGP(evt:GamepadEvent):void{
+                trace(evt.key)
+            }
+            private function onStick(evt:GamepadEvent):void{
+                trace(evt.state.LStick)
+            }
+            
             protected function windowedapplication1_closeHandler(event:Event):void
             {
                 // TODO Auto-generated method stub
@@ -55,11 +43,7 @@
             
             protected function setBtn_clickHandler(event:MouseEvent):void
             {
-                
-                var lVibration:uint = lRumble.value 
-                var rVibration:uint = rRumble.value
-                
-                //_xinput.XInputSetState(0,lVibration,rVibration);    
+                   
             }
             
         ]]>
@@ -68,7 +52,6 @@
     <fx:Declarations>
         <!-- Place non-visual elements (e.g., services, value objects) here -->
     </fx:Declarations>
-    <s:VSlider id="lRumble" x="10" y="10" width="20" maximum="65535" minimum="0"/>
-    <s:VSlider id="rRumble" x="38" y="10" width="20" maximum="65535" minimum="0"/>
-    <s:Button id="setBtn" x="10" y="118" width="49" label="Set" click="setBtn_clickHandler(event)"/>
+    <s:Button id="setBtn" x="10" y="10" width="191" height="65" label="CLICK ME"
+              click="setBtn_clickHandler(event)"/>
 </s:WindowedApplication>

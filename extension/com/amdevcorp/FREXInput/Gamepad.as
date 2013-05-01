@@ -3,11 +3,12 @@
 package com.amdevcorp.FREXInput {
     
 	import adobe.utils.CustomActions;
+	import flash.events.TimerEvent;
     import flash.geom.Point;
     import flash.events.EventDispatcher;
     import com.amdevcorp.FREXInput.XINPUT_GAMEPAD;
     import flash.external.ExtensionContext;
-    
+    import flash.utils.Timer;
     public class Gamepad extends EventDispatcher {
         private static var XService:ExtensionContext;
         public static const XUSER_MAX_COUNT:uint = 4;
@@ -31,16 +32,19 @@ package com.amdevcorp.FREXInput {
         public static const LB         :uint = 0x0100;
         public static const RB         :uint = 0x0200;
         public static const GUIDE      :uint = 0x0400;
+		// UNALLICATED                           0x0800;
         public static const A          :uint = 0x1000;
         public static const B          :uint = 0x2000;
         public static const X          :uint = 0x4000;
         public static const Y          :uint = 0x8000;
-        
+        private static const buttonBitmasksArray:Array = [DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT,
+												  START, BACK, LSTICK, RSTICK,
+												  LB, RB, GUIDE, A, B, X, Y];
         internal static var extensionIsActive:Boolean // == false by default
         private var _USER_ID:uint
-		private var lastState:XINPUT_GAMEPAD; // only used for discovering changes
+		private var lastState:XINPUT_GAMEPAD = new XINPUT_GAMEPAD()// only used for discovering changes
 		private var lastRumble:Array;
-        
+        private var updateTimer:Timer;
         public function Gamepad(id:uint) {
             if (!extensionIsActive) {
 				XService = ExtensionContext.createExtensionContext("com.amdevcorp.ane.FREXInput", null);
@@ -51,13 +55,50 @@ package com.amdevcorp.FREXInput {
 					throw new Error("General failure", ERROR_EXTENSION_FAILED_TO_START)
 				}				
 			}
-			_USER_ID = id;
-			lastRumble = [0, 0];
 			if (id >= XUSER_MAX_COUNT) {
                 throw new ArgumentError("Wrong id:" + String(id), ERROR_WRONG_ID);
             }
+			// all green
+			_USER_ID = id;
+			lastRumble = [0, 0];
+			
+			updateTimer = new Timer(30); // nearly 30 times/sec
+			updateTimer.addEventListener(TimerEvent.TIMER, onUpdate);
+			updateTimer.start();
         
         }
+		
+		private function onUpdate(e:TimerEvent):void {
+			var newState:XINPUT_GAMEPAD = XInputGetState(_USER_ID);
+			//calculating differences in button states
+			var differences:uint = newState.Buttons ^ lastState.Buttons;
+			for each (var i:uint in buttonBitmasksArray) {
+				// bithacks!
+				if (differences & i) { //if this button has been changed
+					var EventType:String;
+					if (newState.Buttons &i) { // if button has been pressed
+						EventType = GamepadEvent.PRESS;
+					} else { // or released
+						EventType = GamepadEvent.RELEASE;
+					}
+					dispatchEvent(new GamepadEvent(EventType, newState, i));
+				}
+			}
+			//if sticks have been moved (99% they have)
+			if ((newState.LStick.x != lastState.LStick.x) ||
+				(newState.LStick.y != lastState.LStick.y) ||
+				(newState.RStick.x != lastState.RStick.x) ||
+				(newState.RStick.y != lastState.RStick.y)) {
+				dispatchEvent(new GamepadEvent(GamepadEvent.STICK_MOVED, newState));
+			}
+			//if triggers have been moved
+			if ((newState.LTrigger != lastState.LTrigger) ||
+				(newState.RTrigger != lastState.RTrigger)) {
+				dispatchEvent(new GamepadEvent(GamepadEvent.TRIGGER_MOVED, newState));
+			}
+			lastState = newState;
+		}
+		
         public function isPressed(buttonCode:uint):Boolean {
 			return ((XInputGetState(_USER_ID).Buttons & buttonCode) != 0)
 		}
@@ -68,7 +109,7 @@ package com.amdevcorp.FREXInput {
 		
 		/**
 		 * usage:
-		 * gp.state = [null,65535] <-- null for no change
+		 * gp.rumble = [null,65535] <-- null for no change
 		 */
 		public function set rumble(values:Array):void {
 			if (values.length!=2) {
@@ -80,11 +121,11 @@ package com.amdevcorp.FREXInput {
 			} else {
 				var lRumble:uint = uint(lastRumble[0])
 				var rRumble:uint = uint(lastRumble[1])
-				if (values[0]) {
+				if (values[0] != null) {
 					lRumble = values[0];
 					lastRumble[0] = values[0];
 				}
-				if (values[1]) {
+				if (values[1] != null) {
 					rRumble = values[1];
 					lastRumble[1] = values[1];
 				}
@@ -103,9 +144,8 @@ package com.amdevcorp.FREXInput {
         }
         
         internal function XInputGetState(userIndex:uint):XINPUT_GAMEPAD {
-            var state:String = XService.call("XInputGetState", userIndex) as String
-            var gp:XINPUT_GAMEPAD = new XINPUT_GAMEPAD()
-            gp.initWithJSON(state)
+            var state:String = XService.call("XInputGetState", userIndex) as String;
+            var gp:XINPUT_GAMEPAD = new XINPUT_GAMEPAD(state);
             return gp;
         }
         
@@ -121,7 +161,8 @@ package com.amdevcorp.FREXInput {
         public function _Gamepad():void {
             XService.dispose();
             extensionIsActive = false;
-			//this = null;
+			//TODO: this
+            //this = null;
 			
         
         }

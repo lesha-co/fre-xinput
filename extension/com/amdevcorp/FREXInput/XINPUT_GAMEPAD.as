@@ -20,7 +20,7 @@ package com.amdevcorp.FREXInput
 			return new Point(ThumbRX, ThumbRY);
 		}
 		
-		internal function initWithJSON(src:String):void {
+		private function initWithJSON(src:String):void {
 			var o:Object = JSON.parse(src);
 			Buttons = o.gamepad.buttons;
 			LTrigger = o.gamepad.triggers[0];
@@ -31,6 +31,8 @@ package com.amdevcorp.FREXInput
 			ThumbRY = o.gamepad.sticks[1].y;
 		}
 		
-        public function XINPUT_GAMEPAD() {} 
+        public function XINPUT_GAMEPAD(srcJson:String = "") {
+			if (srcJson) initWithJSON(srcJson);
+		} 
     }
 }

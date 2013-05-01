@@ -11,16 +11,17 @@ package com.amdevcorp.FREXInput {
     import flash.utils.Timer;
     public class Gamepad extends EventDispatcher {
         private static var XService:ExtensionContext;
-        public static const XUSER_MAX_COUNT:uint = 4;
         
-        public static const ERROR_EXTENSION_FAILED_TO_START:uint = 1;
+        public static const ERROR_EXTENSION_NOT_STARTED:uint = 1;
         public static const ERROR_WRONG_ID:uint = 2;
         //TODO: this error
 		public static const ERROR_CONTROLLER_NOT_CONNECTED:uint = 3;
-        public static const RUMBLE_MAX_VALUE:uint = 65535;
+        
+		public static const XUSER_MAX_COUNT:uint = 4;
+		public static const RUMBLE_MAX_VALUE:uint = 65535;
 		public static const TRIGGER_MAX_VALUE:uint = 255;
 		
-        // values from MSDN
+        // Button bitmasks from MSDN
         public static const DPAD_UP    :uint = 0x0001;
         public static const DPAD_DOWN  :uint = 0x0002;
         public static const DPAD_LEFT  :uint = 0x0004;
@@ -37,41 +38,86 @@ package com.amdevcorp.FREXInput {
         public static const B          :uint = 0x2000;
         public static const X          :uint = 0x4000;
         public static const Y          :uint = 0x8000;
+		
+		// Button bitmasks, enumerated
         private static const buttonBitmasksArray:Array = [DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT,
 												  START, BACK, LSTICK, RSTICK,
 												  LB, RB, GUIDE, A, B, X, Y];
-        internal static var extensionIsActive:Boolean // == false by default
-        private var _USER_ID:uint
-		private var lastState:XINPUT_GAMEPAD = new XINPUT_GAMEPAD()// only used for discovering changes
+        
+		// Indicates if native extension is running
+		public static var extensionIsActive:Boolean // == false by default
+        
+		// Controller ID in XInput
+		private var _USER_ID:uint
+		
+		// Controller state in previous update. 
+		// Is only used for discovering changes in state
+		private var lastState:XINPUT_GAMEPAD = new XINPUT_GAMEPAD()
+		
+		// Controller vibration state
 		private var lastRumble:Array;
+		
+		// This timer updates controller state
         private var updateTimer:Timer;
-        public function Gamepad(id:uint) {
-            if (!extensionIsActive) {
-				XService = ExtensionContext.createExtensionContext("com.amdevcorp.ane.FREXInput", null);
-				var success:Boolean = XService.call("activate") as Boolean;
+		
+		// Starts extension
+		public static function startService():void {
+			if (!extensionIsActive) {
+				var success:Boolean  = false
+				try {
+					XService = ExtensionContext.createExtensionContext("com.amdevcorp.ane.FREXInput", null);
+					success= XService.call("activate") as Boolean;					
+				} catch (err:Error){
+                    trace("can't create the context, program will crash now")
+                }
 				if (success) {
 					extensionIsActive = true
 				} else {
-					throw new Error("General failure", ERROR_EXTENSION_FAILED_TO_START)
+					throw new Error("General failure", ERROR_EXTENSION_NOT_STARTED)
 				}				
 			}
+		}
+		
+		/**
+		 * de-actovates extension
+         */
+        public static function stopSerivce():void {            
+            extensionIsActive = false;
+			XService.dispose();
+			
+        }
+		
+		/**
+		 * 
+		 * @param	id Controller ID (0 to 3)
+		 */
+        public function Gamepad(id:uint) {
+			// First, we need to start extension
+            if (!extensionIsActive) {
+				startService();
+			}
+			// Second, we check if ID is correct
 			if (id >= XUSER_MAX_COUNT) {
                 throw new ArgumentError("Wrong id:" + String(id), ERROR_WRONG_ID);
             }
-			// all green
+			// if all is green, setting up things
 			_USER_ID = id;
-			lastRumble = [0, 0];
 			
+			lastRumble = [0, 0];
 			updateTimer = new Timer(30); // nearly 30 times/sec
 			updateTimer.addEventListener(TimerEvent.TIMER, onUpdate);
 			updateTimer.start();
         
         }
 		
+		// Updates controller state
 		private function onUpdate(e:TimerEvent):void {
+			if (!extensionIsActive) return;
+			// Current state of gamepad
 			var newState:XINPUT_GAMEPAD = XInputGetState(_USER_ID);
-			//calculating differences in button states
+			// calculating differences in button states
 			var differences:uint = newState.Buttons ^ lastState.Buttons;
+			// looking which buttons have been changed
 			for each (var i:uint in buttonBitmasksArray) {
 				// bithacks!
 				if (differences & i) { //if this button has been changed
@@ -96,22 +142,35 @@ package com.amdevcorp.FREXInput {
 				(newState.RTrigger != lastState.RTrigger)) {
 				dispatchEvent(new GamepadEvent(GamepadEvent.TRIGGER_MOVED, newState));
 			}
+			// updating lastState
 			lastState = newState;
 		}
 		
+		/**
+		 * Tests if button is pressed
+		 * @param	buttonCode Button bitmask, provide 0x1000 for A button
+		 * @return true if pressed, false otherwise
+		 */
         public function isPressed(buttonCode:uint):Boolean {
+			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
 			return ((XInputGetState(_USER_ID).Buttons & buttonCode) != 0)
 		}
 		
-		public function get state():XINPUT_GAMEPAD{
+		/**
+		 * Current controller state
+		 */
+		public function get state():XINPUT_GAMEPAD {
+			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
 			return XInputGetState(_USER_ID)
 		}
 		
 		/**
+		 * Sets the motors speeds [left,right], allowed values from 0 to 65535
 		 * usage:
-		 * gp.rumble = [null,65535] <-- null for no change
+		 * ***.rumble = [null,65535] <-- null for no change
 		 */
 		public function set rumble(values:Array):void {
+			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
 			if (values.length!=2) {
 				throw new ArgumentError("Invalid number of parameters. Expected: 2; got: "+String(values.length))
 			} else if ( values[0]<0 ||values[0] > RUMBLE_MAX_VALUE){
@@ -134,40 +193,34 @@ package com.amdevcorp.FREXInput {
 			}
 		}
 		
-		
         internal function isSupported():Boolean {
+			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
             return (XService.call("isSupported") as Boolean)
         }
         
         internal function XInputSetState(userIndex:uint, lRumble:uint, rRumble:uint):uint {
+			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
             return XService.call("XInputSetState", userIndex, lRumble, rRumble) as uint;
         }
         
         internal function XInputGetState(userIndex:uint):XINPUT_GAMEPAD {
+			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
             var state:String = XService.call("XInputGetState", userIndex) as String;
             var gp:XINPUT_GAMEPAD = new XINPUT_GAMEPAD(state);
             return gp;
         }
         
         internal function XInputEnable(enable:Boolean):void {
+			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
             trace(XService.call("XInputEnable", enable) as Boolean);
             return;
         }
         
 		
-        /**
-         * Yes, this IS a destroyer method in ActionScript ;P
-         */
-        public function _Gamepad():void {
-            XService.dispose();
-            extensionIsActive = false;
-			//TODO: this
-            //this = null;
-			
         
-        }
 		
 		public function get USER_ID():uint {
+			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
 			return _USER_ID;
 		}
     }

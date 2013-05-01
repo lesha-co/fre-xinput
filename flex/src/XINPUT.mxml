@@ -2,7 +2,7 @@
 <s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
                        xmlns:s="library://ns.adobe.com/flex/spark"
                        xmlns:mx="library://ns.adobe.com/flex/mx"
-                       width="85" height="68"
+                       width="185" height="84"
                        addedToStage="windowedapplication1_addedToStageHandler(event)"
                        close="windowedapplication1_closeHandler(event)">
     
@@ -16,33 +16,44 @@
             private var flag:Boolean;
             protected function button1_clickHandler(event:MouseEvent):void
             {
-                
+                if(Gamepad.extensionIsActive) 
+                {
+                    Gamepad.stopSerivce()
+                }
+                else{
+                    Gamepad.startService()
+                }
+                 
             }
             
             protected function windowedapplication1_addedToStageHandler(event:Event):void
             {
-   
                 gp = new Gamepad(0);
-                gp.addEventListener(GamepadEvent.PRESS,onGP);
-                gp.addEventListener(GamepadEvent.STICK_MOVED,onStick);
-                gp.addEventListener(GamepadEvent.TRIGGER_MOVED,onTrigger);
-
+                gp.addEventListener(GamepadEvent.PRESS,onKeyDown);
+                gp.addEventListener(GamepadEvent.RELEASE,onKeyUp);
+                //gp.addEventListener(GamepadEvent.STICK_MOVED,onStick);
+                //gp.addEventListener(GamepadEvent.TRIGGER_MOVED,onTrigger);
             }
-            private function onGP(evt:GamepadEvent):void{
-                trace(evt.key)
+            private function onKeyDown(evt:GamepadEvent):void{
+                trace("↓",evt.key.toString(16))
+                
+               
             }
+            private function onKeyUp(evt:GamepadEvent):void{
+                trace("↑",evt.key.toString(16))
+            }
+            
             private function onStick(evt:GamepadEvent):void{
-                trace(evt.state.LStick)
+                trace("left:",evt.state.LStick,"right:",evt.state.RStick)
             }
             protected function onTrigger(evt:GamepadEvent):void
             {
-                trace(evt.state.LTrigger, evt.state.RTrigger);
+                trace("Triggers:",evt.state.LTrigger, evt.state.RTrigger);
                 
             }            
             protected function windowedapplication1_closeHandler(event:Event):void
             {
-                gp._Gamepad();
-                
+                Gamepad.stopSerivce()
             }
             
 
@@ -53,4 +64,5 @@
     <fx:Declarations>
         <!-- Place non-visual elements (e.g., services, value objects) here -->
     </fx:Declarations>
+    <s:Button x="28" y="10" label="DO NOT PRESS ME" click="button1_clickHandler(event)"/>
 </s:WindowedApplication>

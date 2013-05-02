@@ -36,7 +36,7 @@ additionally, for building:
 I will add it later.
 
 ### API
-I will add it later.
+/flex/src/XINPUT.mxml contains api demo
 
 ### How to build your own:
 In the /native/FREXInput folder is a VS2012 project that can build a DLL  

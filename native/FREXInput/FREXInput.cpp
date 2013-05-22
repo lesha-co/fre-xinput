@@ -38,11 +38,19 @@ XInputGetState2_t DLL_XInputGetState2;  // kind of private function, i'm not rea
 // linkage status
 BOOL fRunTimeLinkSuccess = FALSE; 
 
-void XINPUT_STATE_to_JSON(XINPUT_STATE state, uint8_t** response){
+void XINPUT_STATE_to_JSON(XINPUT_STATE state, uint32_t dwUserIndex, uint8_t** response){
 	std::stringstream jsonState;
-	jsonState << "{\"packetNumber\": "<< (uint32_t)state.dwPacketNumber << ",\"gamepad\":{\"sticks\":[{\"x\":\"" << state.Gamepad.sThumbLX << "\",\"y\":\"" << state.Gamepad.sThumbLY <<
-		    "\"},{\"x\":\"" << state.Gamepad.sThumbRX << "\",\"y\":\"" << state.Gamepad.sThumbRY <<"\"}],\"buttons\":\"" <<
-			state.Gamepad.wButtons << "\",\"triggers\":[\"" << (int)state.Gamepad.bLeftTrigger << "\",\"" << (int)state.Gamepad.bRightTrigger << "\"]}}";
+	jsonState <<"{\"user\": "<< dwUserIndex << 
+				",\"packetNumber\": "<< (uint32_t)state.dwPacketNumber << 
+				",\"gamepad\":{\"sticks\":[{\"x\":\"" << 
+					state.Gamepad.sThumbLX << "\",\"y\":\"" << 
+					state.Gamepad.sThumbLY << "\"},{\"x\":\"" << 
+					state.Gamepad.sThumbRX << "\",\"y\":\"" << 
+					state.Gamepad.sThumbRY <<"\"}],\"buttons\":\"" << 
+					state.Gamepad.wButtons << "\",\"triggers\":[\"" << 
+					(int)state.Gamepad.bLeftTrigger << "\",\"" << 
+					(int)state.Gamepad.bRightTrigger << "\"]}}";
+
 	std::string s = jsonState.str();
 	*response = (uint8_t*)strcpy((char*)malloc(s.length() + 1), s.c_str());
 	return;
@@ -130,7 +138,7 @@ FREObject FRE_XInputGetState(FREContext ctx, void* funcData, uint32_t argc, FREO
 	
 	XINPUT_STATE state;
 	PL_XInputGetState((DWORD) dwUserIndex,&state);
-	XINPUT_STATE_to_JSON(state,&json);
+	XINPUT_STATE_to_JSON(state,(uint32_t)(DWORD)dwUserIndex,&json);
 
 	FREObject result;
 	FRENewObjectFromUTF8(strlen((const char*)json),(const uint8_t*)json,&result);

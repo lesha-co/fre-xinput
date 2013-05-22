@@ -8,7 +8,7 @@ using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	int index = 0;
+	int index = 3;
 	const double Multiplier = 65536/256;
 	BOOL flag = false;
 	if (PL_activate())
@@ -24,12 +24,15 @@ int _tmain(int argc, _TCHAR* argv[])
 							 (WORD)(Multiplier*state.Gamepad.bRightTrigger),
 							 (WORD)(Multiplier*state.Gamepad.bLeftTrigger));
 			
-			printf("%*d: %*x %*d %*d %*d %*d \r",8,state.dwPacketNumber,
-											4,state.Gamepad.wButtons,
-											6,state.Gamepad.sThumbLX,
-											6,state.Gamepad.sThumbLY,
-											6,state.Gamepad.sThumbRX,
-											6,state.Gamepad.sThumbRY);	
+			//printf("%*d: %*x %*d %*d %*d %*d \r",8,state.dwPacketNumber,
+			//								4,state.Gamepad.wButtons,
+			//								6,state.Gamepad.sThumbLX,
+			//								6,state.Gamepad.sThumbLY,
+			//								6,state.Gamepad.sThumbRX,
+			//								6,state.Gamepad.sThumbRY);	
+			uint8_t* resp;
+			XINPUT_STATE_to_JSON(state,index,&resp);
+			cout << resp << "\r";
 		}
 		
 	}

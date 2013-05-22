@@ -12,6 +12,7 @@ package com.amdevcorp.FREXInput
 		public var ThumbRX  : int;
 		public var ThumbRY  : int;
 		
+        public var dwPacketNumber :uint;
 		
 		public function get LStick():Point {
 			return new Point(ThumbLX, ThumbLY);
@@ -22,13 +23,14 @@ package com.amdevcorp.FREXInput
 		
 		private function initWithJSON(src:String):void {
 			var o:Object = JSON.parse(src);
-			Buttons = o.gamepad.buttons;
-			LTrigger = o.gamepad.triggers[0];
-			RTrigger = o.gamepad.triggers[1];
-			ThumbLX = o.gamepad.sticks[0].x;
-			ThumbLY = o.gamepad.sticks[0].y;
-			ThumbRX = o.gamepad.sticks[1].x;
-			ThumbRY = o.gamepad.sticks[1].y;
+			Buttons = uint(o.gamepad.buttons);
+			LTrigger = uint(o.gamepad.triggers[0]);
+			RTrigger = uint(o.gamepad.triggers[1]);
+			ThumbLX = int(o.gamepad.sticks[0].x);
+			ThumbLY = int(o.gamepad.sticks[0].y);
+			ThumbRX = int(o.gamepad.sticks[1].x);
+			ThumbRY = int(o.gamepad.sticks[1].y);
+            dwPacketNumber = uint(o.packetNumber);
 		}
 		
         public function XINPUT_GAMEPAD(srcJson:String = "") {

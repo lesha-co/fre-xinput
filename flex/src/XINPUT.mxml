@@ -2,7 +2,7 @@
 <s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
                        xmlns:s="library://ns.adobe.com/flex/spark"
                        xmlns:mx="library://ns.adobe.com/flex/mx"
-                       width="185" height="84"
+                       width="465" height="354"
                        addedToStage="windowedapplication1_addedToStageHandler(event)"
                        close="windowedapplication1_closeHandler(event)">
     
@@ -10,7 +10,6 @@
         <![CDATA[
             import com.amdevcorp.FREXInput.Gamepad;
             import com.amdevcorp.FREXInput.GamepadEvent;
-            import com.amdevcorp.FREXInput.XINPUT_GAMEPAD;
             private var gp:Gamepad;
             private var t:Timer;
             private var flag:Boolean;
@@ -28,21 +27,23 @@
             
             protected function windowedapplication1_addedToStageHandler(event:Event):void
             {
-                gp = new Gamepad(0);
+                gp = new Gamepad(1);
+                
                 gp.addEventListener(GamepadEvent.PRESS,onKeyDown);
                 gp.addEventListener(GamepadEvent.RELEASE,onKeyUp);
+                //trace(Gamepad.connectedXInputDevices);
+                //var gp2:Gamepad = new Gamepad(2);
+                //trace(gp2.state.dwPacketNumber)
+                
                 //gp.addEventListener(GamepadEvent.STICK_MOVED,onStick);
                 //gp.addEventListener(GamepadEvent.TRIGGER_MOVED,onTrigger);
             }
             private function onKeyDown(evt:GamepadEvent):void{
-                trace("↓",evt.key.toString(16))
-                
-               
+                trace("↓",evt.key.toString(16))              
             }
             private function onKeyUp(evt:GamepadEvent):void{
                 trace("↑",evt.key.toString(16))
             }
-            
             private function onStick(evt:GamepadEvent):void{
                 trace("left:",evt.state.LStick,"right:",evt.state.RStick)
             }
@@ -64,5 +65,4 @@
     <fx:Declarations>
         <!-- Place non-visual elements (e.g., services, value objects) here -->
     </fx:Declarations>
-    <s:Button x="28" y="10" label="DO NOT PRESS ME" click="button1_clickHandler(event)"/>
 </s:WindowedApplication>

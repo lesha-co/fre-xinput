@@ -33,7 +33,7 @@ package com.amdevcorp.FREXInput {
         public static const LB         :uint = 0x0100;
         public static const RB         :uint = 0x0200;
         public static const GUIDE      :uint = 0x0400;
-		// UNALLICATED                           0x0800;
+		// UNALLICATED                         0x0800;
         public static const A          :uint = 0x1000;
         public static const B          :uint = 0x2000;
         public static const X          :uint = 0x4000;
@@ -79,7 +79,7 @@ package com.amdevcorp.FREXInput {
 		}
 		
 		/**
-		 * de-actovates extension
+		 * de-activates extension
          */
         public static function stopSerivce():void {            
             extensionIsActive = false;
@@ -155,7 +155,15 @@ package com.amdevcorp.FREXInput {
 			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
 			return ((XInputGetState(_USER_ID).Buttons & buttonCode) != 0)
 		}
-		
+		public static function get connectedXInputDevices():Array {
+			var connectedDevices:Array = new Array();
+			for (var i:int = 0; i < XUSER_MAX_COUNT; i++) {
+				if (XInputGetState(i).dwPacketNumber != 0) {
+					connectedDevices.push(i);
+				}
+			}
+			return connectedDevices;
+		}
 		/**
 		 * Current controller state
 		 */
@@ -193,24 +201,24 @@ package com.amdevcorp.FREXInput {
 			}
 		}
 		
-        internal function isSupported():Boolean {
+        internal static function isSupported():Boolean {
 			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
             return (XService.call("isSupported") as Boolean)
         }
         
-        internal function XInputSetState(userIndex:uint, lRumble:uint, rRumble:uint):uint {
+        internal static function XInputSetState(userIndex:uint, lRumble:uint, rRumble:uint):uint {
 			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
             return XService.call("XInputSetState", userIndex, lRumble, rRumble) as uint;
         }
         
-        internal function XInputGetState(userIndex:uint):XINPUT_GAMEPAD {
+        internal static function XInputGetState(userIndex:uint):XINPUT_GAMEPAD {
 			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
             var state:String = XService.call("XInputGetState", userIndex) as String;
             var gp:XINPUT_GAMEPAD = new XINPUT_GAMEPAD(state);
             return gp;
         }
         
-        internal function XInputEnable(enable:Boolean):void {
+        internal static function XInputEnable(enable:Boolean):void {
 			if (!extensionIsActive) throw new Error("Extension isn't running", ERROR_EXTENSION_NOT_STARTED);
             trace(XService.call("XInputEnable", enable) as Boolean);
             return;

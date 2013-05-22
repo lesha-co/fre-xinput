@@ -10,4 +10,4 @@ __declspec(dllexport) void PL_XInputGetState(DWORD dwUserIndex, XINPUT_STATE* st
 __declspec(dllexport) DWORD PL_XInputSetState(DWORD dwUserIndex, WORD left, WORD right);
 __declspec(dllexport) BOOL PL_activate();
 __declspec(dllexport) void PL_XInputEnable(BOOL enable);
-
+__declspec(dllexport) void XINPUT_STATE_to_JSON(XINPUT_STATE state, uint32_t dwUserIndex, uint8_t** response);
